@@ -1,0 +1,31 @@
+{
+  "name": "batch-email-sender",
+  "version": "1.0.0",
+  "description": "Batch email sending system with Excel processing and Resend API integration",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "server": "node src/server.js",
+    "test": "node src/index.js sample_data.xlsx"
+  },
+  "keywords": [
+    "email",
+    "batch",
+    "excel",
+    "resend",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dns": "^0.2.2",
+    "dotenv": "^16.4.1",
+    "email-validator": "^2.0.4",
+    "express": "^4.22.1",
+    "net": "^1.0.2",
+    "node-fetch": "^2.7.0",
+    "resend": "^3.2.0",
+    "xlsx": "^0.18.5"
+  }
+}
