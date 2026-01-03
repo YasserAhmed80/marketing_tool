@@ -203,6 +203,102 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// API endpoint to start scraping
+app.post('/api/scrape', async (req, res) => {
+    try {
+        const { country, maxResults, delay } = req.body;
+
+        if (!country) {
+            return res.status(400).json({
+                success: false,
+                message: 'Country is required'
+            });
+        }
+
+        console.log(`\n🔍 Starting scraper for ${country}...`);
+        console.log(`   Max Results: ${maxResults}`);
+        console.log(`   Delay: ${delay}ms\n`);
+
+        // Import child_process
+        const { spawn } = await import('child_process');
+
+        // Spawn scraper process
+        const scraperPath = path.join(process.cwd(), 'scraper', 'deep_scraper.js');
+        const scraper = spawn('node', [scraperPath], {
+            env: {
+                ...process.env,
+                SCRAPER_COUNTRY: country,
+                SCRAPER_LIMIT: maxResults.toString(),
+                SCRAPER_AUTO: 'true'
+            },
+            cwd: process.cwd(),
+            shell: true
+        });
+
+        // Send immediate response
+        res.json({
+            success: true,
+            message: `Scraping started for ${country}! A browser window will open. Check terminal for progress.`,
+            stats: { total: 0, withPhone: 0, withEmail: 0 }
+        });
+
+        // Log output
+        scraper.stdout.on('data', (data) => console.log(data.toString()));
+        scraper.stderr.on('data', (data) => console.error('Scraper:', data.toString()));
+        scraper.on('close', (code) => console.log(`\n✅ Scraper finished (code: ${code})\n`));
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// API endpoint to get scraper stats
+app.get('/api/scraper-stats', async (req, res) => {
+    try {
+        // Check both possible locations
+        let filePath = path.join(process.cwd(), 'real_estate_leads.xlsx');
+        const fs = await import('fs');
+
+        if (!fs.default.existsSync(filePath)) {
+            filePath = path.join(process.cwd(), 'scraper', 'real_estate_leads.xlsx');
+        }
+
+        let stats = {
+            total: 0,
+            withPhone: 0,
+            withEmail: 0
+        };
+
+        let latestResults = [];
+
+        try {
+            const data = excelService.readExcelFile(filePath);
+            stats.total = data.length;
+            stats.withPhone = data.filter(r => r.phone && r.phone !== '').length;
+            stats.withEmail = data.filter(r => r.email && r.email !== '').length;
+
+            // Get latest 10 results
+            latestResults = data.slice(-10);
+        } catch (e) {
+            // File doesn't exist yet
+        }
+
+        res.json({
+            success: true,
+            stats: stats,
+            latestResults: latestResults
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`\n🚀 Email Management System`);

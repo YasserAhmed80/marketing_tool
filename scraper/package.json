@@ -1,0 +1,17 @@
+{
+    "name": "google-maps-scraper",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Google Maps scraper for real estate leads",
+    "main": "google_maps_scraper.js",
+    "scripts": {
+        "scrape": "node google_maps_scraper.js",
+        "find-emails": "node email_finder.js"
+    },
+    "dependencies": {
+        "puppeteer": "^21.6.1",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
+        "xlsx": "^0.18.5"
+    }
+}

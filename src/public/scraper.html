@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .country-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .country-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .country-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .country-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .country-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .country-cities {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .settings {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="number"] {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            width: 100px;
+            font-size: 14px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+
+        .warning-text {
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .progress-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .progress-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .results-table {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🗺️ Google Maps Scraper</h1>
+        <p class="subtitle">Real Estate Leads Generator</p>
+
+        <div class="warning">
+            <div class="warning-title">⚠️ Important: VPN Required</div>
+            <div class="warning-text">Make sure ProtonVPN is connected before scraping to protect your IP address.</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <span>🌍</span>
+                <span>Select Country</span>
+            </div>
+            <div class="country-grid" id="countryGrid">
+                <!-- Countries will be loaded here -->
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <span>⚙️</span>
+                <span>Settings</span>
+            </div>
+            <div class="settings">
+                <div class="setting-row">
+                    <span class="setting-label">Max Results per Session:</span>
+                    <input type="number" id="maxResults" value="100" min="10" max="200">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Delay Between Searches (seconds):</span>
+                    <input type="number" id="delay" value="10" min="5" max="30">
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" id="startBtn" onclick="startScraping()">
+            🚀 Start Scraping
+        </button>
+
+        <div class="status" id="status"></div>
+
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <h3>📊 Scraping Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 100</div>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h3>✅ Latest Results</h3>
+            <div class="results-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>City</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalScraped">0</div>
+                <div class="stat-label">Total Scraped</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="withPhone">0</div>
+                <div class="stat-label">With Phone</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="withEmail">0</div>
+                <div class="stat-label">With Email</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const countries = {
+            'Egypt': ['Cairo', 'Alexandria', 'Giza', 'Sharm El Sheikh', 'Hurghada'],
+            'Saudi Arabia': ['Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam'],
+            'United Arab Emirates': ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah'],
+            'Algeria': ['Algiers', 'Oran', 'Constantine', 'Annaba', 'Blida'],
+            'Iraq': ['Baghdad', 'Basra', 'Mosul', 'Erbil', 'Najaf'],
+            'Sudan': ['Khartoum', 'Omdurman', 'Port Sudan', 'Kassala', 'Nyala'],
+            'Yemen': ['Sanaa', 'Aden', 'Taiz', 'Hodeidah', 'Ibb']
+        };
+
+        let selectedCountry = null;
+
+        // Load countries
+        function loadCountries() {
+            const grid = document.getElementById('countryGrid');
+
+            Object.entries(countries).forEach(([country, cities]) => {
+                const card = document.createElement('div');
+                card.className = 'country-card';
+                card.onclick = () => selectCountry(country, card);
+
+                card.innerHTML = `
+                    <div class="country-name">${country}</div>
+                    <div class="country-cities">${cities.length} cities</div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function selectCountry(country, element) {
+            // Remove previous selection
+            document.querySelectorAll('.country-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Select new country
+            element.classList.add('selected');
+            selectedCountry = country;
+        }
+
+        async function startScraping() {
+            if (!selectedCountry) {
+                showStatus('Please select a country first', 'error');
+                return;
+            }
+
+            const maxResults = document.getElementById('maxResults').value;
+            const delay = document.getElementById('delay').value;
+
+            showStatus('Starting scraper... Browser will open automatically', 'info');
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'block';
+
+            try {
+                const response = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        country: selectedCountry,
+                        maxResults: parseInt(maxResults),
+                        delay: parseInt(delay) * 1000
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus(`✅ ${data.message}`, 'success');
+
+                    // Start polling for progress
+                    startProgressPolling(maxResults);
+                } else {
+                    showStatus(`❌ Error: ${data.message}`, 'error');
+                    document.getElementById('startBtn').disabled = false;
+                }
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+
+        let progressInterval;
+        function startProgressPolling(maxResults) {
+            progressInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/scraper-stats');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const stats = data.stats;
+                        updateProgress(stats.total, maxResults);
+                        updateStats(stats);
+
+                        // Update results table
+                        if (data.latestResults) {
+                            updateResultsTable(data.latestResults);
+                        }
+
+                        // Stop polling if we reached the limit
+                        if (stats.total >= maxResults) {
+                            clearInterval(progressInterval);
+                            document.getElementById('startBtn').disabled = false;
+                            showStatus(`✅ Scraping complete! Found ${stats.total} businesses`, 'success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling progress:', error);
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        function updateProgress(current, total) {
+            const percentage = Math.min((current / total) * 100, 100);
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${current} / ${total}`;
+        }
+
+        function updateResultsTable(results) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+
+            results.slice(-10).reverse().forEach((result, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${result.name || 'N/A'}</td>
+                    <td>${result.phone || 'N/A'}</td>
+                    <td>${result.email || 'N/A'}</td>
+                    <td>${result.city || 'N/A'}</td>
+                `;
+            });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status show ${type}`;
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalScraped').textContent = stats.total || 0;
+            document.getElementById('withPhone').textContent = stats.withPhone || 0;
+            document.getElementById('withEmail').textContent = stats.withEmail || 0;
+        }
+
+        // Load stats on page load
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/scraper-stats');
+                const data = await response.json();
+                if (data.success) {
+                    updateStats(data.stats);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Initialize
+        loadCountries();
+        loadStats();
+    </script>
+</body>
+
+</html>
