@@ -20,6 +20,23 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Route to preview email template
+app.get('/preview-template', async (req, res) => {
+    try {
+        const fs = await import('fs');
+        const templatePath = path.join(__dirname, 'templates', 'emailTemplate.html');
+        let template = fs.default.readFileSync(templatePath, 'utf8');
+
+        // Replace placeholder with sample name
+        const sampleName = req.query.name || 'أحمد محمد';
+        template = template.replace('<name>', sampleName);
+
+        res.send(template);
+    } catch (error) {
+        res.status(500).send(`Error loading template: ${error.message}`);
+    }
+});
+
 // API endpoint to validate emails (basic - fast)
 app.post('/api/validate', async (req, res) => {
     try {
@@ -127,10 +144,13 @@ app.post('/api/validate-deep', async (req, res) => {
 app.post('/api/send', async (req, res) => {
     try {
         const filePath = path.join(process.cwd(), 'emails_verified_to_send.xlsx');
-        const batchSize = 100; // Send 100 emails per day
+
+        // Get batch size from request or default to 100
+        const batchSize = req.body.batchSize ? parseInt(req.body.batchSize) : 100;
 
         // Check daily limit BEFORE sending
-        const limitCheck = dailySendLimiter.canSend(batchSize);
+        // We pass batchSize as the 2nd argument (customLimit) so the daily limit matches the requested batch size
+        const limitCheck = dailySendLimiter.canSend(batchSize, batchSize);
 
         if (!limitCheck.allowed) {
             return res.status(429).json({
@@ -139,7 +159,7 @@ app.post('/api/send', async (req, res) => {
                 stats: {
                     sent: limitCheck.sent,
                     remaining: limitCheck.remaining,
-                    limit: 100
+                    limit: batchSize
                 }
             });
         }
@@ -164,7 +184,7 @@ app.post('/api/send', async (req, res) => {
 
         res.json({
             success: true,
-            message: `Email sending completed - sent ${stats.success} emails. Daily total: ${status.sent}/100`,
+            message: `Email sending completed - sent ${stats.success} emails. Daily total: ${status.sent}/${batchSize}`,
             stats: stats,
             dailyStatus: status
         });

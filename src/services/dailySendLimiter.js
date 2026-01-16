@@ -50,11 +50,15 @@ class DailySendLimiter {
     /**
      * Check if we can send more emails today
      * @param {number} count - Number of emails to send
+     * @param {number} [customLimit] - Optional custom limit for this check
      * @returns {Object} { allowed: boolean, remaining: number, message: string }
      */
-    canSend(count) {
+    canSend(count, customLimit) {
         const data = this.loadData();
         const today = this.getTodayDate();
+
+        // Use custom limit if provided, otherwise default
+        const limit = customLimit || this.dailyLimit;
 
         // Reset counter if it's a new day
         if (data.date !== today) {
@@ -63,14 +67,14 @@ class DailySendLimiter {
             this.saveData(data);
         }
 
-        const remaining = this.dailyLimit - data.sent;
+        const remaining = limit - data.sent;
 
         if (remaining <= 0) {
             return {
                 allowed: false,
                 remaining: 0,
                 sent: data.sent,
-                message: `Daily limit reached! Already sent ${data.sent} emails today. Come back tomorrow.`
+                message: `Daily limit reached! Already sent ${data.sent} emails today. Limit is ${limit}.`
             };
         }
 
@@ -79,7 +83,7 @@ class DailySendLimiter {
                 allowed: false,
                 remaining: remaining,
                 sent: data.sent,
-                message: `Cannot send ${count} emails. Only ${remaining} remaining today (already sent ${data.sent}).`
+                message: `Cannot send ${count} emails. Only ${remaining} remaining today (already sent ${data.sent}, limit ${limit}).`
             };
         }
 

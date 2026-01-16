@@ -5,20 +5,20 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
-.env
+# .env
 .env.local
 .env.*.local
 
 # Excel files (contain sensitive data)
-*.xlsx
-*.xls
-*.ods
-emails_data.xlsx
-emails_verified_to_send.xlsx
-emails_data_backup.xlsx
+# *.xlsx
+# *.xls
+# *.ods
+# emails_data.xlsx
+# emails_verified_to_send.xlsx
+# emails_data_backup.xlsx
 
 # Daily limit tracker
-daily_send_limit.json
+# daily_send_limit.json
 
 # Logs
 logs/
